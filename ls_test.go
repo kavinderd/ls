@@ -3,7 +3,6 @@ package main_test
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"io"
@@ -70,7 +69,6 @@ var _ = Describe("ls", func() {
 
 			out := <-outC
 
-			fmt.Print(out)
 			Expect(out).To(Equal(buf.String()))
 		})
 	})
