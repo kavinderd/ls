@@ -1,75 +1,36 @@
 package main_test
 
 import (
-	"bufio"
-	"bytes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"io"
-	. "ls"
-	"os"
+	// TODO: Read about go imports
+	"github.com/onsi/gomega/gexec"
 	"os/exec"
 )
 
 var _ = Describe("ls", func() {
 
-	var stdout *os.File
-	var readFile *os.File
-	var writeFile *os.File
 	var err error
-	var buf bytes.Buffer
-	var routine func(reader io.ReadCloser, channel chan string)
+	var pathToLs string
 
-	BeforeEach(func() {
-		stdout = os.Stdout
-		readFile, writeFile, err = os.Pipe()
-		if err != nil {
-			Fail("Couldn't create Pipe")
-		}
-
-		routine = func(reader io.ReadCloser, channel chan string) {
-			var b bytes.Buffer
-			_, err := io.Copy(&b, reader)
-			reader.Close()
-			if err != nil {
-				Fail("Error in Channel")
-			}
-			channel <- b.String()
-		}
-		os.Stdout = writeFile
+	BeforeSuite(func() {
+		pathToLs, err = gexec.Build("ls")
+		Ω(err).ShouldNot(HaveOccurred())
 	})
 
-	AfterEach(func() {
-		buf.Reset()
+	AfterSuite(func() {
+		gexec.CleanupBuildArtifacts()
 	})
 
-	cleanup := func() {
-		writeFile.Close()
-		os.Stdout = stdout
-	}
-
-	var _ = Describe("without any args", func() {
-		It("lists the contents of the current working dir", func() {
-			path := ""
-
-			writer := bufio.NewWriter(os.Stdout)
-			SimpleLs(path, writer)
-
-			outC := make(chan string)
-			go routine(readFile, outC)
-
-			ls := exec.Command("ls")
-			b, err := ls.Output()
-			if err != nil {
-				Fail("Error line 70")
-			}
-
-			buf.Write(b)
-			cleanup()
-
-			out := <-outC
-
-			Expect(out).To(Equal(buf.String()))
-		})
+	It("Only displays the non-hidden files without any flags", func() {
+		command := exec.Command(pathToLs)
+		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+		Ω(err).ShouldNot(HaveOccurred())
+		commandReal := exec.Command("ls")
+		sessionReal, err := gexec.Start(commandReal, GinkgoWriter, GinkgoWriter)
+		Ω(err).ShouldNot(HaveOccurred())
+		Eventually(session).Should(gexec.Exit(0))
+		Eventually(sessionReal).Should(gexec.Exit(0))
+		Ω(session.Out.Contents()).Should(Equal(sessionReal.Out.Contents()))
 	})
 })

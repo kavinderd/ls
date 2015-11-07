@@ -1,43 +1,42 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
 )
 
-var err error
+var (
+	err      error
+	path     string
+	fileList []os.FileInfo
+)
 
-func SimpleLs(path string, writer *bufio.Writer) {
-	if path == "" {
-		path, err = os.Getwd()
-		if err != nil {
-			writer.WriteString("Error getting current wd, not my problem")
-			return
-		}
-	}
-
-	contents, err := ioutil.ReadDir(path)
+func SetPath() {
+	path, err = os.Getwd()
 	if err != nil {
-		fmt.Println(err)
-		return
+		os.Exit(1)
 	}
-	for _, file := range contents {
-		name := file.Name()
-		if strings.Index(name, ".") != 0 {
-			writer.WriteString(file.Name())
-			writer.WriteByte(10)
+}
+
+func CollectFiles() {
+	fileList, err = ioutil.ReadDir(path)
+	if err != nil {
+		os.Exit(2)
+	}
+}
+
+func PrintFiles() {
+	for _, file := range fileList {
+		if strings.Index(file.Name(), ".") != 0 {
+			fmt.Println(file.Name())
 		}
 	}
-	writer.Flush()
 }
 
 func main() {
-	path, _ := os.Getwd()
-	contents, _ := ioutil.ReadDir(path)
-	for _, file := range contents {
-		fmt.Println(file.Name())
-	}
+	SetPath()
+	CollectFiles()
+	PrintFiles()
 }
