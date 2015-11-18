@@ -33,4 +33,18 @@ var _ = Describe("ls", func() {
 		Eventually(sessionReal).Should(gexec.Exit(0))
 		Ω(session.Out.Contents()).Should(Equal(sessionReal.Out.Contents()))
 	})
+
+	Describe("-l", func() {
+		It("Displays permissions, owner, group, size, updated at and name info", func() {
+			command := exec.Command(pathToLs, "-l")
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Ω(err).ShouldNot(HaveOccurred())
+			commandReal := exec.Command("ls", "-l")
+			sessionReal, err := gexec.Start(commandReal, GinkgoWriter, GinkgoWriter)
+			Ω(err).ShouldNot(HaveOccurred())
+			Eventually(session).Should(gexec.Exit(0))
+			Eventually(sessionReal).Should(gexec.Exit(0))
+			Ω(session.Out.Contents()).Should(Equal(sessionReal.Out.Contents()))
+		})
+	})
 })
